@@ -1,8 +1,6 @@
 package cz.marekvele.personal.morosystemsdemo.rest.controller;
 
-import cz.marekvele.personal.morosystemsdemo.model.CreateUser;
-import cz.marekvele.personal.morosystemsdemo.model.UpdateUser;
-import cz.marekvele.personal.morosystemsdemo.model.User;
+import cz.marekvele.personal.morosystemsdemo.model.*;
 import cz.marekvele.personal.morosystemsdemo.rest.errorhandling.ApiExceptionHandler;
 import cz.marekvele.personal.morosystemsdemo.rest.exception.UserNotFoundException;
 import cz.marekvele.personal.morosystemsdemo.service.UsersService;
@@ -185,5 +183,59 @@ class UsersControllerTest {
                         .value("User with id '7' was not found"))
                 .andExpect(jsonPath("$.path").value("/rest/user/7"))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
+    }
+
+    @Test
+    void createPasswordReturnsNoContentAndDelegatesToService() throws Exception {
+        SetPassword password = new SetPassword("new-password");
+
+        mockMvc.perform(post("/rest/user/{id}/password", 7)
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"newPassword":"new-password"}
+                                """))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        then(usersService).should().createPassword(7L, password);
+    }
+
+    @Test
+    void createPasswordReturnsBadRequestWhenPasswordIsTooShort() throws Exception {
+        mockMvc.perform(post("/rest/user/{id}/password", 7)
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"newPassword":"short"}
+                                """))
+                .andExpect(status().isBadRequest());
+
+        then(usersService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void changePasswordReturnsNoContentAndDelegatesToService() throws Exception {
+        ChangePassword password = new ChangePassword("current-password", "new-password");
+
+        mockMvc.perform(put("/rest/user/{id}/password", 7)
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"currentPassword":"current-password","newPassword":"new-password"}
+                                """))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        then(usersService).should().changePassword(7L, password);
+    }
+
+    @Test
+    void changePasswordReturnsBadRequestWhenPasswordIsTooShort() throws Exception {
+        mockMvc.perform(put("/rest/user/{id}/password", 7)
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"currentPassword":"short","newPassword":"new-password"}
+                                """))
+                .andExpect(status().isBadRequest());
+
+        then(usersService).shouldHaveNoInteractions();
     }
 }

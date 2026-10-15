@@ -1,13 +1,12 @@
 package cz.marekvele.personal.morosystemsdemo.service.impl;
 
-import cz.marekvele.personal.morosystemsdemo.model.CreateUser;
-import cz.marekvele.personal.morosystemsdemo.model.UpdateUser;
-import cz.marekvele.personal.morosystemsdemo.model.User;
+import cz.marekvele.personal.morosystemsdemo.model.*;
 import cz.marekvele.personal.morosystemsdemo.persistence.entity.UserEntity;
 import cz.marekvele.personal.morosystemsdemo.persistence.repository.UsersRepository;
-import cz.marekvele.personal.morosystemsdemo.rest.exception.DuplicateUsernameException;
+import cz.marekvele.personal.morosystemsdemo.rest.exception.*;
 import cz.marekvele.personal.morosystemsdemo.service.UsersService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +19,7 @@ import java.util.Optional;
 public class UsersServiceImpl implements UsersService {
 
     private final UsersRepository usersRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     @Override
@@ -56,5 +56,35 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public void deleteUser(Long id) {
         usersRepository.deleteById(id);
+    }
+
+    @Override
+    public void createPassword(Long id, SetPassword password) {
+        UserEntity user = usersRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+
+        if (user.getPassword() != null && !user.getPassword().isBlank()) {
+            throw new PasswordAlreadySetException();
+        }
+
+        user.setPassword(passwordEncoder.encode(password.newPassword()));
+        usersRepository.save(user);
+    }
+
+    @Override
+    public void changePassword(Long id, ChangePassword password) {
+        UserEntity user = usersRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+
+        if (user.getPassword() == null
+                || !passwordEncoder.matches(password.currentPassword(), user.getPassword())) {
+            throw new InvalidCurrentPasswordException();
+        }
+        if (passwordEncoder.matches(password.newPassword(), user.getPassword())) {
+            throw new SamePasswordException();
+        }
+
+        user.setPassword(passwordEncoder.encode(password.newPassword()));
+        usersRepository.save(user);
     }
 }

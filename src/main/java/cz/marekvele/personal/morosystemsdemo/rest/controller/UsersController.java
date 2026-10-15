@@ -1,8 +1,6 @@
 package cz.marekvele.personal.morosystemsdemo.rest.controller;
 
-import cz.marekvele.personal.morosystemsdemo.model.CreateUser;
-import cz.marekvele.personal.morosystemsdemo.model.UpdateUser;
-import cz.marekvele.personal.morosystemsdemo.model.User;
+import cz.marekvele.personal.morosystemsdemo.model.*;
 import cz.marekvele.personal.morosystemsdemo.rest.exception.UserNotFoundException;
 import cz.marekvele.personal.morosystemsdemo.service.UsersService;
 import jakarta.validation.Valid;
@@ -54,5 +52,23 @@ public class UsersController {
         usersService.getUser(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
         usersService.deleteUser(id);
+    }
+
+    @PostMapping("/{id}/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void createPassword(
+            @PathVariable @Positive @NotNull Long id,
+            @RequestBody @Valid SetPassword password
+    ) {
+        usersService.createPassword(id, password);
+    }
+
+    @PutMapping("/{id}/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(
+            @PathVariable @Positive @NotNull Long id,
+            @RequestBody @Valid ChangePassword password
+    ) {
+        usersService.changePassword(id, password);
     }
 }

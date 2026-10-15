@@ -1,16 +1,15 @@
 package cz.marekvele.personal.morosystemsdemo.service.impl;
 
-import cz.marekvele.personal.morosystemsdemo.model.CreateUser;
-import cz.marekvele.personal.morosystemsdemo.model.UpdateUser;
-import cz.marekvele.personal.morosystemsdemo.model.User;
+import cz.marekvele.personal.morosystemsdemo.model.*;
 import cz.marekvele.personal.morosystemsdemo.persistence.entity.UserEntity;
 import cz.marekvele.personal.morosystemsdemo.persistence.repository.UsersRepository;
-import cz.marekvele.personal.morosystemsdemo.rest.exception.DuplicateUsernameException;
+import cz.marekvele.personal.morosystemsdemo.rest.exception.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +23,9 @@ class UsersServiceImplTest {
 
     @Mock
     private UsersRepository usersRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UsersServiceImpl usersService;
@@ -118,5 +120,121 @@ class UsersServiceImplTest {
         usersService.deleteUser(id);
 
         verify(usersRepository).deleteById(id);
+    }
+
+    @Test
+    void createsPasswordWhenUserHasNoPassword() {
+        Long id = 6L;
+        String encodedPassword = "encoded-new-password";
+        UserEntity user = new UserEntity(id, "Test User", "testuser");
+        SetPassword input = new SetPassword("new-password");
+        when(usersRepository.findById(id)).thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("new-password")).thenReturn(encodedPassword);
+
+        usersService.createPassword(id, input);
+
+        assertThat(user.getPassword()).isEqualTo(encodedPassword);
+        verify(passwordEncoder).encode("new-password");
+        verify(usersRepository).save(user);
+    }
+
+    @Test
+    void createPasswordFailsWhenUserDoesNotExist() {
+        Long id = 6L;
+        when(usersRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> usersService.createPassword(id, new SetPassword("new-password")))
+                .isInstanceOf(UserNotFoundException.class);
+
+        verify(usersRepository, never()).save(any());
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void createPasswordFailsWhenPasswordIsAlreadySet() {
+        Long id = 6L;
+        UserEntity user = new UserEntity(id, "Test User", "testuser", "encoded-current");
+        when(usersRepository.findById(id)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> usersService.createPassword(id, new SetPassword("new-password")))
+                .isInstanceOf(PasswordAlreadySetException.class);
+
+        verify(usersRepository, never()).save(any());
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void changesPasswordWhenCurrentPasswordIsValidAndNewPasswordDiffers() {
+        Long id = 7L;
+        UserEntity user = new UserEntity(id, "Test User", "testuser", "encoded-current");
+        ChangePassword input = new ChangePassword("current-password", "new-password");
+        when(usersRepository.findById(id)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("current-password", "encoded-current")).thenReturn(true);
+        when(passwordEncoder.matches("new-password", "encoded-current")).thenReturn(false);
+        when(passwordEncoder.encode("new-password")).thenReturn("encoded-new");
+
+        usersService.changePassword(id, input);
+
+        assertThat(user.getPassword()).isEqualTo("encoded-new");
+        verify(passwordEncoder).encode("new-password");
+        verify(usersRepository).save(user);
+    }
+
+    @Test
+    void changePasswordFailsWhenUserDoesNotExist() {
+        Long id = 7L;
+        when(usersRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> usersService.changePassword(
+                id, new ChangePassword("current-password", "new-password")))
+                .isInstanceOf(UserNotFoundException.class);
+
+        verify(usersRepository, never()).save(any());
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void changePasswordFailsWhenUserHasNoPassword() {
+        Long id = 7L;
+        UserEntity user = new UserEntity(id, "Test User", "testuser", null);
+        when(usersRepository.findById(id)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> usersService.changePassword(
+                id, new ChangePassword("current-password", "new-password")))
+                .isInstanceOf(InvalidCurrentPasswordException.class);
+
+        verify(usersRepository, never()).save(any());
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void changePasswordFailsWhenCurrentPasswordDoesNotMatch() {
+        Long id = 7L;
+        UserEntity user = new UserEntity(id, "Test User", "testuser", "encoded-current");
+        when(usersRepository.findById(id)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong-password", "encoded-current")).thenReturn(false);
+
+        assertThatThrownBy(() -> usersService.changePassword(
+                id, new ChangePassword("wrong-password", "new-password")))
+                .isInstanceOf(InvalidCurrentPasswordException.class);
+
+        verify(passwordEncoder, never()).encode(any());
+        verify(usersRepository, never()).save(any());
+    }
+
+    @Test
+    void changePasswordFailsWhenNewPasswordIsSameAsCurrentPassword() {
+        Long id = 7L;
+        UserEntity user = new UserEntity(id, "Test User", "testuser", "encoded-current");
+        when(usersRepository.findById(id)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("current-password", "encoded-current")).thenReturn(true);
+        when(passwordEncoder.matches("current-password", "encoded-current")).thenReturn(true);
+
+        assertThatThrownBy(() -> usersService.changePassword(
+                id, new ChangePassword("current-password", "current-password")))
+                .isInstanceOf(SamePasswordException.class);
+
+        verify(passwordEncoder, never()).encode(any());
+        verify(usersRepository, never()).save(any());
     }
 }
