@@ -5,6 +5,7 @@ import cz.marekvele.personal.morosystemsdemo.model.UpdateUser;
 import cz.marekvele.personal.morosystemsdemo.model.User;
 import cz.marekvele.personal.morosystemsdemo.persistence.entity.UserEntity;
 import cz.marekvele.personal.morosystemsdemo.persistence.repository.UsersRepository;
+import cz.marekvele.personal.morosystemsdemo.rest.exception.DuplicateUsernameException;
 import cz.marekvele.personal.morosystemsdemo.service.UsersService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,9 @@ public class UsersServiceImpl implements UsersService {
 
     @Override
     public User createUser(CreateUser user) {
-        //TODO check duplicate username
+        if (usersRepository.findByUsername(user.username()).isPresent()) {
+            throw new DuplicateUsernameException(user.username());
+        }
         UserEntity savedUser = usersRepository.save(new UserEntity(null, user.name(), user.username(), null));
         return new User(savedUser.getId(), savedUser.getName(), savedUser.getUsername());
     }

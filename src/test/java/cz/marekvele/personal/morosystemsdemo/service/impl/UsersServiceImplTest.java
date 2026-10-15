@@ -5,6 +5,7 @@ import cz.marekvele.personal.morosystemsdemo.model.UpdateUser;
 import cz.marekvele.personal.morosystemsdemo.model.User;
 import cz.marekvele.personal.morosystemsdemo.persistence.entity.UserEntity;
 import cz.marekvele.personal.morosystemsdemo.persistence.repository.UsersRepository;
+import cz.marekvele.personal.morosystemsdemo.rest.exception.DuplicateUsernameException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,8 +16,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UsersServiceImplTest {
@@ -81,6 +82,18 @@ class UsersServiceImplTest {
 
         assertThat(result).isEqualTo(new User(3L, "Nový uživatel", "testuser"));
         verify(usersRepository).save(userToSave);
+    }
+
+    @Test
+    void createUserWithDuplicateUsernameError() {
+    CreateUser duplicate = new CreateUser("Nový uživatel", "testuser");
+        when(usersRepository.findByUsername("testuser"))
+                .thenReturn(Optional.of(new UserEntity(4L, "Stávající uživatel", "testuser")));
+
+        assertThatThrownBy(() -> usersService.createUser(duplicate))
+                .isInstanceOf(DuplicateUsernameException.class);
+
+        verify(usersRepository, never()).save(any());
     }
 
     @Test
