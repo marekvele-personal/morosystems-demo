@@ -73,35 +73,37 @@ class UsersServiceImplTest {
     @Test
     void createsUserAndReturnsSavedDto() {
         CreateUser input = new CreateUser("Nový uživatel", "testuser");
-        when(usersRepository.save(new UserEntity(null, "Nový uživatel", "testuser", null)))
+        UserEntity userToSave = new UserEntity(null, "Nový uživatel", "testuser", null);
+        when(usersRepository.save(userToSave))
                 .thenReturn(new UserEntity(3L, "Nový uživatel", "testuser", null));
 
         User result = usersService.createUser(input);
 
         assertThat(result).isEqualTo(new User(3L, "Nový uživatel", "testuser"));
-        verify(usersRepository).save(new UserEntity(null, "Nový uživatel", "testuser", null));
+        verify(usersRepository).save(userToSave);
     }
 
     @Test
     void updatesUserAndReturnsSavedDto() {
-        when(usersRepository.getReferenceById(4L))
-                .thenReturn(new UserEntity(4L, "Aktualizovaný uživatel", "testuser", null));
+        Long id = 4L;
+        UserEntity user = new UserEntity(id, "Aktualizovaný uživatel", "testuser", null);
+        when(usersRepository.getReferenceById(id)).thenReturn(user);
 
         UpdateUser input = new UpdateUser("Aktualizovaný uživatel");
 
-        when(usersRepository.save(new UserEntity(4L, "Aktualizovaný uživatel", "testuser",null)))
-                .thenReturn(new UserEntity(4L, "Aktualizovaný uživatel", "testuser", null));
+        when(usersRepository.save(user)).thenReturn(user);
 
-        User result = usersService.updateUser(4L, input);
+        User result = usersService.updateUser(id, input);
 
-        assertThat(result).isEqualTo(new User(4L, "Aktualizovaný uživatel", "testuser"));
-        verify(usersRepository).save(new UserEntity(4L, "Aktualizovaný uživatel", "testuser", null));
+        assertThat(result).isEqualTo(new User(id, "Aktualizovaný uživatel", "testuser"));
+        verify(usersRepository).save(user);
     }
 
     @Test
     void deletesUserById() {
-        usersService.deleteUser(5L);
+        Long id = 5L;
+        usersService.deleteUser(id);
 
-        verify(usersRepository).deleteById(5L);
+        verify(usersRepository).deleteById(id);
     }
 }
