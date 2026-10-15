@@ -25,6 +25,7 @@ public class DatabaseUserDetailsService implements UserDetailsService {
         return User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
+                //TODO PROD: add tables for roles and user-roles binding, retrieve assigned roles here
                 .authorities(ROLE_USER)
                 .build();
     }
