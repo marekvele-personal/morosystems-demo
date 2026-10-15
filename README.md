@@ -34,3 +34,7 @@ Po startu otevřete aplikaci na:
 Swagger UI najdete na adrese:
 
 `http://localhost:8080/swagger-ui/index.html`
+
+Healthcheck je dostupný na:
+
+`http://localhost:8080/actuator/health`
