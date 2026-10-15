@@ -1,9 +1,6 @@
 package cz.marekvele.personal.morosystemsdemo.persistence.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
@@ -21,6 +18,8 @@ public class UserEntity {
     }
 
     @Id
+    @GeneratedValue(generator = "users_seq", strategy = GenerationType.SEQUENCE)
+    @SequenceGenerator(name = "users_seq", allocationSize = 1)
     private Long id;
 
     @Column(name = "name", nullable = false, length = 256)

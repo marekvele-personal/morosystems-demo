@@ -25,4 +25,15 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="02-create-users-sequence" author="marek.vele">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="users_seq"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="users_seq"
+                        startValue="3"
+                        incrementBy="1"/>
+    </changeSet>
+
 </databaseChangeLog>

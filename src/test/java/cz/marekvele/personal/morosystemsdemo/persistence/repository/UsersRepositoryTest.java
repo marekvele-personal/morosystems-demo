@@ -57,4 +57,14 @@ class UsersRepositoryTest {
                 .extracting(UserEntity::getId)
                 .contains(firstUser.getId(), secondUser.getId());
     }
+
+    @Test
+    void findsUserByUsername() {
+        UserEntity user = usersRepository.saveAndFlush(
+                new UserEntity(103L, "Test User", "testuser"));
+
+        assertThat(usersRepository.findByUsername("testuser"))
+                .contains(user);
+        assertThat(usersRepository.findByUsername("unknown")).isEmpty();
+    }
 }
