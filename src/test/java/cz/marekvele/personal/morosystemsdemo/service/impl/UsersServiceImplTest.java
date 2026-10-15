@@ -4,11 +4,15 @@ import cz.marekvele.personal.morosystemsdemo.model.*;
 import cz.marekvele.personal.morosystemsdemo.persistence.entity.UserEntity;
 import cz.marekvele.personal.morosystemsdemo.persistence.repository.UsersRepository;
 import cz.marekvele.personal.morosystemsdemo.rest.exception.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
@@ -29,6 +33,11 @@ class UsersServiceImplTest {
 
     @InjectMocks
     private UsersServiceImpl usersService;
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void returnsUserDtoWhenUserExists() {
@@ -172,6 +181,9 @@ class UsersServiceImplTest {
         when(passwordEncoder.matches("current-password", "encoded-current")).thenReturn(true);
         when(passwordEncoder.matches("new-password", "encoded-current")).thenReturn(false);
         when(passwordEncoder.encode("new-password")).thenReturn("encoded-new");
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("testuser", "current-password")
+        );
 
         usersService.changePassword(id, input);
 
@@ -194,10 +206,47 @@ class UsersServiceImplTest {
     }
 
     @Test
+    void changePasswordFailsWhenNotAuthenticated() {
+        Long id = 7L;
+        UserEntity user = new UserEntity(id, "Test User", "testuser", "encoded-current");
+        when(usersRepository.findById(id)).thenReturn(Optional.of(user));
+        SecurityContextHolder.clearContext();
+
+        assertThatThrownBy(() -> usersService.changePassword(
+                id, new ChangePassword("current-password", "new-password")))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verify(passwordEncoder, never()).matches(any(), any());
+        verify(passwordEncoder, never()).encode(any());
+        verify(usersRepository, never()).save(any());
+    }
+
+    @Test
+    void changePasswordFailsWhenLoggedInUserDoesNotMatch() {
+        Long id = 7L;
+        UserEntity user = new UserEntity(id, "Test User", "testuser", "encoded-current");
+        when(usersRepository.findById(id)).thenReturn(Optional.of(user));
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("otheruser", "password")
+        );
+
+        assertThatThrownBy(() -> usersService.changePassword(
+                id, new ChangePassword("current-password", "new-password")))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verify(passwordEncoder, never()).matches(any(), any());
+        verify(passwordEncoder, never()).encode(any());
+        verify(usersRepository, never()).save(any());
+    }
+
+    @Test
     void changePasswordFailsWhenUserHasNoPassword() {
         Long id = 7L;
         UserEntity user = new UserEntity(id, "Test User", "testuser", null);
         when(usersRepository.findById(id)).thenReturn(Optional.of(user));
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("testuser", "password")
+        );
 
         assertThatThrownBy(() -> usersService.changePassword(
                 id, new ChangePassword("current-password", "new-password")))
@@ -213,6 +262,9 @@ class UsersServiceImplTest {
         UserEntity user = new UserEntity(id, "Test User", "testuser", "encoded-current");
         when(usersRepository.findById(id)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong-password", "encoded-current")).thenReturn(false);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("testuser", "wrong-password")
+        );
 
         assertThatThrownBy(() -> usersService.changePassword(
                 id, new ChangePassword("wrong-password", "new-password")))
@@ -229,6 +281,9 @@ class UsersServiceImplTest {
         when(usersRepository.findById(id)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("current-password", "encoded-current")).thenReturn(true);
         when(passwordEncoder.matches("current-password", "encoded-current")).thenReturn(true);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("testuser", "current-password")
+        );
 
         assertThatThrownBy(() -> usersService.changePassword(
                 id, new ChangePassword("current-password", "current-password")))

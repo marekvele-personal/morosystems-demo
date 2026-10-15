@@ -6,11 +6,15 @@ import cz.marekvele.personal.morosystemsdemo.persistence.repository.UsersReposit
 import cz.marekvele.personal.morosystemsdemo.rest.exception.*;
 import cz.marekvele.personal.morosystemsdemo.service.UsersService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -76,6 +80,11 @@ public class UsersServiceImpl implements UsersService {
     public void changePassword(Long id, ChangePassword password) {
         UserEntity user = usersRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !Objects.equals(user.getUsername(), authentication.getName())) {
+            throw new AccessDeniedException("Access is denied");
+        }
 
         if (user.getPassword() == null
                 || !passwordEncoder.matches(password.currentPassword(), user.getPassword())) {
