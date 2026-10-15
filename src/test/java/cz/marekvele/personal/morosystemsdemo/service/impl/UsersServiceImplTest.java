@@ -102,7 +102,7 @@ class UsersServiceImplTest {
     void updatesUserAndReturnsSavedDto() {
         Long id = 4L;
         UserEntity user = new UserEntity(id, "Aktualizovaný uživatel", "testuser");
-        when(usersRepository.getReferenceById(id)).thenReturn(user);
+        when(usersRepository.findById(id)).thenReturn(Optional.of(user));
 
         UpdateUser input = new UpdateUser("Aktualizovaný uživatel");
 
