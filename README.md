@@ -30,3 +30,7 @@ Aplikace běží na:
 Po startu otevřete aplikaci na: 
 
 `http://localhost:8080`
+
+Swagger UI najdete na adrese:
+
+`http://localhost:8080/swagger-ui/index.html`
