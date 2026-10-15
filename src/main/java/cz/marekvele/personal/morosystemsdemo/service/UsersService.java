@@ -1,6 +1,7 @@
 package cz.marekvele.personal.morosystemsdemo.service;
 
-import cz.marekvele.personal.morosystemsdemo.model.CreateOrUpdateUser;
+import cz.marekvele.personal.morosystemsdemo.model.CreateUser;
+import cz.marekvele.personal.morosystemsdemo.model.UpdateUser;
 import cz.marekvele.personal.morosystemsdemo.model.User;
 
 import java.util.List;
@@ -12,9 +13,9 @@ public interface UsersService {
 
     List<User> getUsers();
 
-    User createUser(CreateOrUpdateUser user);
+    User createUser(CreateUser user);
 
-    User updateUser(User user);
+    User updateUser(Long id, UpdateUser user);
 
     void deleteUser(Long id);
 

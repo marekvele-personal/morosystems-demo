@@ -1,6 +1,7 @@
 package cz.marekvele.personal.morosystemsdemo.service.impl;
 
-import cz.marekvele.personal.morosystemsdemo.model.CreateOrUpdateUser;
+import cz.marekvele.personal.morosystemsdemo.model.CreateUser;
+import cz.marekvele.personal.morosystemsdemo.model.UpdateUser;
 import cz.marekvele.personal.morosystemsdemo.model.User;
 import cz.marekvele.personal.morosystemsdemo.persistence.entity.UserEntity;
 import cz.marekvele.personal.morosystemsdemo.persistence.repository.UsersRepository;
@@ -29,7 +30,7 @@ class UsersServiceImplTest {
     @Test
     void returnsUserDtoWhenUserExists() {
         Long id = 100L;
-        UserEntity user = new UserEntity(id, "Test User");
+        UserEntity user = new UserEntity(id, "Test User", "testuser", null);
         when(usersRepository.findById(id)).thenReturn(Optional.of(user));
 
         Optional<User> result = usersService.getUser(id);
@@ -38,7 +39,7 @@ class UsersServiceImplTest {
                 .isPresent()
                 .get()
                 .usingRecursiveComparison()
-                .isEqualTo(new User(id, "Test User"));
+                .isEqualTo(new User(id, "Test User", "testuser"));
         verify(usersRepository).findById(id);
     }
 
@@ -56,41 +57,45 @@ class UsersServiceImplTest {
     @Test
     void returnsAllUsersAsDtos() {
         when(usersRepository.findAll()).thenReturn(List.of(
-                new UserEntity(1L, "První uživatel"),
-                new UserEntity(2L, "Druhý uživatel")
+                new UserEntity(1L, "První uživatel", "firstuser", null),
+                new UserEntity(2L, "Druhý uživatel", "seconduser", null)
         ));
 
         List<User> result = usersService.getUsers();
 
         assertThat(result).containsExactly(
-                new User(1L, "První uživatel"),
-                new User(2L, "Druhý uživatel")
+                new User(1L, "První uživatel", "firstuser"),
+                new User(2L, "Druhý uživatel", "seconduser")
         );
         verify(usersRepository).findAll();
     }
 
     @Test
     void createsUserAndReturnsSavedDto() {
-        CreateOrUpdateUser input = new CreateOrUpdateUser("Nový uživatel");
-        when(usersRepository.save(new UserEntity(null, "Nový uživatel")))
-                .thenReturn(new UserEntity(3L, "Nový uživatel"));
+        CreateUser input = new CreateUser("Nový uživatel", "testuser");
+        when(usersRepository.save(new UserEntity(null, "Nový uživatel", "testuser", null)))
+                .thenReturn(new UserEntity(3L, "Nový uživatel", "testuser", null));
 
         User result = usersService.createUser(input);
 
-        assertThat(result).isEqualTo(new User(3L, "Nový uživatel"));
-        verify(usersRepository).save(new UserEntity(null, "Nový uživatel"));
+        assertThat(result).isEqualTo(new User(3L, "Nový uživatel", "testuser"));
+        verify(usersRepository).save(new UserEntity(null, "Nový uživatel", "testuser", null));
     }
 
     @Test
     void updatesUserAndReturnsSavedDto() {
-        User input = new User(4L, "Aktualizovaný uživatel");
-        when(usersRepository.save(new UserEntity(4L, "Aktualizovaný uživatel")))
-                .thenReturn(new UserEntity(4L, "Aktualizovaný uživatel"));
+        when(usersRepository.getReferenceById(4L))
+                .thenReturn(new UserEntity(4L, "Aktualizovaný uživatel", "testuser", null));
 
-        User result = usersService.updateUser(input);
+        UpdateUser input = new UpdateUser("Aktualizovaný uživatel");
 
-        assertThat(result).isEqualTo(input);
-        verify(usersRepository).save(new UserEntity(4L, "Aktualizovaný uživatel"));
+        when(usersRepository.save(new UserEntity(4L, "Aktualizovaný uživatel", "testuser",null)))
+                .thenReturn(new UserEntity(4L, "Aktualizovaný uživatel", "testuser", null));
+
+        User result = usersService.updateUser(4L, input);
+
+        assertThat(result).isEqualTo(new User(4L, "Aktualizovaný uživatel", "testuser"));
+        verify(usersRepository).save(new UserEntity(4L, "Aktualizovaný uživatel", "testuser", null));
     }
 
     @Test

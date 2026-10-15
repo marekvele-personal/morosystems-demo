@@ -1,6 +1,7 @@
 package cz.marekvele.personal.morosystemsdemo.rest.controller;
 
-import cz.marekvele.personal.morosystemsdemo.model.CreateOrUpdateUser;
+import cz.marekvele.personal.morosystemsdemo.model.CreateUser;
+import cz.marekvele.personal.morosystemsdemo.model.UpdateUser;
 import cz.marekvele.personal.morosystemsdemo.model.User;
 import cz.marekvele.personal.morosystemsdemo.rest.exception.UserNotFoundException;
 import cz.marekvele.personal.morosystemsdemo.service.UsersService;
@@ -33,18 +34,18 @@ public class UsersController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@RequestBody @Valid CreateOrUpdateUser user) {
+    public User createUser(@RequestBody @Valid CreateUser user) {
         return usersService.createUser(user);
     }
 
     @PutMapping("/{id}")
     public User updateUser(
             @PathVariable @Positive @NotNull Long id,
-            @RequestBody CreateOrUpdateUser user
+            @RequestBody UpdateUser user
     ) {
         usersService.getUser(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
-        return usersService.updateUser(new User(id, user.name()));
+        return usersService.updateUser(id, user);
     }
 
     @DeleteMapping("/{id}")

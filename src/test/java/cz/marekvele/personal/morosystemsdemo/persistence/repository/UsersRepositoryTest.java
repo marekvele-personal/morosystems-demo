@@ -20,7 +20,7 @@ class UsersRepositoryTest {
 
     @Test
     void savesFindsUpdatesAndDeletesUser() {
-        UserEntity user = new UserEntity(100L, "Test User");
+        UserEntity user = new UserEntity(100L, "Test User", "testuser", null);
 
         UserEntity savedUser = usersRepository.saveAndFlush(user);
 
@@ -47,8 +47,8 @@ class UsersRepositoryTest {
 
     @Test
     void returnsSavedUsersInFindAll() {
-        UserEntity firstUser = usersRepository.save(new UserEntity(101L, "First User"));
-        UserEntity secondUser = usersRepository.save(new UserEntity(102L, "Second User"));
+        UserEntity firstUser = usersRepository.save(new UserEntity(101L, "First User", "firstuser", null));
+        UserEntity secondUser = usersRepository.save(new UserEntity(102L, "Second User","seconduser", null));
         usersRepository.flush();
 
         List<UserEntity> users = usersRepository.findAll();

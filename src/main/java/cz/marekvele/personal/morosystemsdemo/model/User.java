@@ -1,4 +1,4 @@
 package cz.marekvele.personal.morosystemsdemo.model;
 
-public record User(Long id, String name) {
+public record User(Long id, String name, String username) {
 }

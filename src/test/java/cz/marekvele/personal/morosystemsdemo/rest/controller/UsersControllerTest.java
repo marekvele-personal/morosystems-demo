@@ -1,6 +1,7 @@
 package cz.marekvele.personal.morosystemsdemo.rest.controller;
 
-import cz.marekvele.personal.morosystemsdemo.model.CreateOrUpdateUser;
+import cz.marekvele.personal.morosystemsdemo.model.CreateUser;
+import cz.marekvele.personal.morosystemsdemo.model.UpdateUser;
 import cz.marekvele.personal.morosystemsdemo.model.User;
 import cz.marekvele.personal.morosystemsdemo.rest.errorhandling.ApiExceptionHandler;
 import cz.marekvele.personal.morosystemsdemo.rest.exception.UserNotFoundException;
@@ -34,12 +35,13 @@ class UsersControllerTest {
     @Test
     void getUserReturnsUserWhenUserExists() throws Exception {
         given(usersService.getUser(7L))
-                .willReturn(Optional.of(new User(7L, "Jiří Svoboda")));
+                .willReturn(Optional.of(new User(7L, "Jiří Svoboda", "jiri.svoboda")));
 
         mockMvc.perform(get("/rest/user/{id}", 7))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(7))
-                .andExpect(jsonPath("$.name").value("Jiří Svoboda"));
+                .andExpect(jsonPath("$.name").value("Jiří Svoboda"))
+                .andExpect(jsonPath("$.username").value("jiri.svoboda"));
     }
 
     @Test
@@ -84,55 +86,59 @@ class UsersControllerTest {
     @Test
     void getUsersReturnsUsers() throws Exception {
         given(usersService.getUsers()).willReturn(java.util.List.of(
-                new User(1L, "První uživatel"),
-                new User(2L, "Druhý uživatel")
+                new User(1L, "První uživatel", "firstuser"),
+                new User(2L, "Druhý uživatel", "seconduser")
         ));
 
         mockMvc.perform(get("/rest/user"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].name").value("První uživatel"))
+                .andExpect(jsonPath("$[0].username").value("firstuser"))
                 .andExpect(jsonPath("$[1].id").value(2))
-                .andExpect(jsonPath("$[1].name").value("Druhý uživatel"));
+                .andExpect(jsonPath("$[1].name").value("Druhý uživatel"))
+                .andExpect(jsonPath("$[1].username").value("seconduser"));
 
         then(usersService).should().getUsers();
     }
 
     @Test
     void createUserReturnsCreatedUser() throws Exception {
-        given(usersService.createUser(new CreateOrUpdateUser("Nový uživatel")))
-                .willReturn(new User(3L, "Nový uživatel"));
+        given(usersService.createUser(new CreateUser("Nový uživatel", "testuser")))
+                .willReturn(new User(3L, "Nový uživatel", "testuser"));
 
         mockMvc.perform(post("/rest/user")
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Nový uživatel"}
+                                {"name":"Nový uživatel","username":"testuser"}
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(3))
-                .andExpect(jsonPath("$.name").value("Nový uživatel"));
+                .andExpect(jsonPath("$.name").value("Nový uživatel"))
+                .andExpect(jsonPath("$.username").value("testuser"));
 
-        then(usersService).should().createUser(new CreateOrUpdateUser("Nový uživatel"));
+        then(usersService).should().createUser(new CreateUser("Nový uživatel", "testuser"));
     }
 
     @Test
     void updateUserReturnsUpdatedUser() throws Exception {
         given(usersService.getUser(7L))
-                .willReturn(Optional.of(new User(7L, "Původní jméno")));
-        given(usersService.updateUser(new User(7L, "Nové jméno")))
-                .willReturn(new User(7L, "Nové jméno"));
+                .willReturn(Optional.of(new User(7L, "Původní jméno", "testuser")));
+        given(usersService.updateUser(7L, new UpdateUser("Nové jméno")))
+                .willReturn(new User(7L, "Nové jméno", "testuser"));
 
         mockMvc.perform(put("/rest/user/{id}", 7)
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Nové jméno"}
+                                {"name":"Nové jméno","username":"testuser"}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(7))
-                .andExpect(jsonPath("$.name").value("Nové jméno"));
+                .andExpect(jsonPath("$.name").value("Nové jméno"))
+                .andExpect(jsonPath("$.username").value("testuser"));
 
         then(usersService).should().getUser(7L);
-        then(usersService).should().updateUser(new User(7L, "Nové jméno"));
+        then(usersService).should().updateUser(7L, new UpdateUser("Nové jméno"));
     }
 
     @Test
@@ -156,7 +162,7 @@ class UsersControllerTest {
     @Test
     void deleteUserReturnsNoContent() throws Exception {
         given(usersService.getUser(7L))
-                .willReturn(Optional.of(new User(7L, "Uživatel")));
+                .willReturn(Optional.of(new User(7L, "Uživatel", "testuser")));
 
         mockMvc.perform(delete("/rest/user/{id}", 7))
                 .andExpect(status().isNoContent())

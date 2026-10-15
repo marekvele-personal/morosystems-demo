@@ -1,6 +1,7 @@
 package cz.marekvele.personal.morosystemsdemo.service.impl;
 
-import cz.marekvele.personal.morosystemsdemo.model.CreateOrUpdateUser;
+import cz.marekvele.personal.morosystemsdemo.model.CreateUser;
+import cz.marekvele.personal.morosystemsdemo.model.UpdateUser;
 import cz.marekvele.personal.morosystemsdemo.model.User;
 import cz.marekvele.personal.morosystemsdemo.persistence.entity.UserEntity;
 import cz.marekvele.personal.morosystemsdemo.persistence.repository.UsersRepository;
@@ -23,27 +24,28 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public Optional<User> getUser(Long id) {
         return usersRepository.findById(id)
-                .map(user -> new User(user.getId(), user.getName()));
+                .map(user -> new User(user.getId(), user.getName(), user.getUsername()));
     }
 
     @Transactional(readOnly = true)
     @Override
     public List<User> getUsers() {
         return usersRepository.findAll().stream()
-                .map(user -> new User(user.getId(), user.getName()))
+                .map(user -> new User(user.getId(), user.getName(), user.getUsername()))
                 .toList();
     }
 
     @Override
-    public User createUser(CreateOrUpdateUser user) {
-        UserEntity savedUser = usersRepository.save(new UserEntity(null, user.name()));
-        return new User(savedUser.getId(), savedUser.getName());
+    public User createUser(CreateUser user) {
+        UserEntity savedUser = usersRepository.save(new UserEntity(null, user.name(), user.username(), null));
+        return new User(savedUser.getId(), savedUser.getName(), savedUser.getUsername());
     }
 
     @Override
-    public User updateUser(User user) {
-        UserEntity updatedUser = usersRepository.save(new UserEntity(user.id(), user.name()));
-        return new User(updatedUser.getId(), updatedUser.getName());
+    public User updateUser(Long id, UpdateUser user) {
+        UserEntity userEntity = usersRepository.getReferenceById(id);
+        UserEntity updatedUser = usersRepository.save(new UserEntity(id, user.name(), userEntity.getUsername(), userEntity.getPassword()));
+        return new User(updatedUser.getId(), updatedUser.getName(), updatedUser.getUsername());
     }
 
     @Override

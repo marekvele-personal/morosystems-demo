@@ -4,15 +4,14 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "users")
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@ToString( exclude = "password")
 public class UserEntity {
 
     @Id
@@ -20,5 +19,11 @@ public class UserEntity {
 
     @Column(name = "name", nullable = false, length = 256)
     private String name;
+
+    @Column(name = "username", nullable = false, length = 256)
+    private String username;
+
+    @Column(name = "password", length = 256)
+    private String password;
 
 }
