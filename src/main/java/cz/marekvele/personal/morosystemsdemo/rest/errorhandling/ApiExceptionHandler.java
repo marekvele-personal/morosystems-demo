@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
@@ -48,6 +49,20 @@ public class ApiExceptionHandler {
                         .map(error ->
                                 String.format("Parameter '%s' %s", result.getMethodParameter().getParameterName(),
                                         error.getDefaultMessage())))
+                .toList();
+
+        return error(HttpStatus.BAD_REQUEST, messages, request);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> handleInvalidPathParameter(
+            MethodArgumentNotValidException exception,
+            HttpServletRequest request
+    ) {
+        List<String> messages = exception.getFieldErrors().stream()
+                .map(error ->
+                    String.format("Field '%s'  %s", error.getField(),
+                            error.getDefaultMessage()))
                 .toList();
 
         return error(HttpStatus.BAD_REQUEST, messages, request);
