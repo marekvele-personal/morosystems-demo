@@ -60,6 +60,7 @@ public class UsersController {
             @PathVariable @Positive @NotNull Long id,
             @RequestBody @Valid SetPassword password
     ) {
+        //TODO PROD: handle creating password with one-time token with time limit instead of via user id
         usersService.createPassword(id, password);
     }
 
