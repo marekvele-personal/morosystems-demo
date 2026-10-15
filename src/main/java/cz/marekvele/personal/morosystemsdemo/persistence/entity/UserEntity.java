@@ -14,6 +14,12 @@ import lombok.*;
 @ToString( exclude = "password")
 public class UserEntity {
 
+    public UserEntity(Long id, String name, String username) {
+        this.id = id;
+        this.name = name;
+        this.username = username;
+    }
+
     @Id
     private Long id;
 

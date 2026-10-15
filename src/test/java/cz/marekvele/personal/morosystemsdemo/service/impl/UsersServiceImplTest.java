@@ -57,8 +57,8 @@ class UsersServiceImplTest {
     @Test
     void returnsAllUsersAsDtos() {
         when(usersRepository.findAll()).thenReturn(List.of(
-                new UserEntity(1L, "První uživatel", "firstuser", null),
-                new UserEntity(2L, "Druhý uživatel", "seconduser", null)
+                new UserEntity(1L, "První uživatel", "firstuser"),
+                new UserEntity(2L, "Druhý uživatel", "seconduser")
         ));
 
         List<User> result = usersService.getUsers();
@@ -73,9 +73,9 @@ class UsersServiceImplTest {
     @Test
     void createsUserAndReturnsSavedDto() {
         CreateUser input = new CreateUser("Nový uživatel", "testuser");
-        UserEntity userToSave = new UserEntity(null, "Nový uživatel", "testuser", null);
+        UserEntity userToSave = new UserEntity(null, "Nový uživatel", "testuser");
         when(usersRepository.save(userToSave))
-                .thenReturn(new UserEntity(3L, "Nový uživatel", "testuser", null));
+                .thenReturn(new UserEntity(3L, "Nový uživatel", "testuser"));
 
         User result = usersService.createUser(input);
 
@@ -86,7 +86,7 @@ class UsersServiceImplTest {
     @Test
     void updatesUserAndReturnsSavedDto() {
         Long id = 4L;
-        UserEntity user = new UserEntity(id, "Aktualizovaný uživatel", "testuser", null);
+        UserEntity user = new UserEntity(id, "Aktualizovaný uživatel", "testuser");
         when(usersRepository.getReferenceById(id)).thenReturn(user);
 
         UpdateUser input = new UpdateUser("Aktualizovaný uživatel");

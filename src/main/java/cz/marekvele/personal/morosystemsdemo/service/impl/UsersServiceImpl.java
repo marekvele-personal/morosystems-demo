@@ -37,6 +37,7 @@ public class UsersServiceImpl implements UsersService {
 
     @Override
     public User createUser(CreateUser user) {
+        //TODO check duplicate username
         UserEntity savedUser = usersRepository.save(new UserEntity(null, user.name(), user.username(), null));
         return new User(savedUser.getId(), savedUser.getName(), savedUser.getUsername());
     }
@@ -44,7 +45,8 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public User updateUser(Long id, UpdateUser user) {
         UserEntity userEntity = usersRepository.getReferenceById(id);
-        UserEntity updatedUser = usersRepository.save(new UserEntity(id, user.name(), userEntity.getUsername(), userEntity.getPassword()));
+        userEntity.setName(user.name());
+        UserEntity updatedUser = usersRepository.save(userEntity);
         return new User(updatedUser.getId(), updatedUser.getName(), updatedUser.getUsername());
     }
 
