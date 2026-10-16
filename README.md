@@ -16,7 +16,7 @@ nebo
 
 Databáze není perzistentní a vytváří se čistá při startu kontejneru PostgreSQL.
 
-Po spuštění aplikace se databáze inicializuje přes **Liquibase**:
+Po spuštění aplikace se databáze inicializuje přes Liquibase.
 
 ## Porty
 
@@ -27,9 +27,9 @@ Aplikace běží na:
 
 ## Přístup k aplikaci
 
-Po startu otevřete aplikaci na: 
+Po startu jsou služby dostupné na: 
 
-`http://localhost:8080`
+`http://localhost:8080/rest/user`
 
 Swagger UI najdete na adrese:
 
